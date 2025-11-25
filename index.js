@@ -1,8 +1,34 @@
 import express from "express"
+import logger from "./logger.js";
+import morgan from "morgan";
 const app = express()
+import "dotenv/config"
 
-const port = 8000
+
+//logger
+const morganFormat = ":method :url :status :response-time ms";
+
+app.use(
+  morgan(morganFormat, {
+    stream: {
+      write: (message) => {
+        const logObject = {
+          method: message.split(" ")[0],
+          url: message.split(" ")[1],
+          status: message.split(" ")[2],
+          responseTime: message.split(" ")[3],
+        };
+        logger.info(JSON.stringify(logObject));
+      },
+    },
+  })
+);
+
+//Port
+const port = process.env.PORT || 3000
 app.use(express.json())
+
+
 
 app.listen(port, () => {
     console.log(`server is running at port ${port}..`)
@@ -12,7 +38,8 @@ let tea_data = []
 let nextid = 1
 
 // CREATE
-app.post('/Data', (req, res) => {
+app.post('/Data', (req, res) => { 
+    logger.warn("A Post request has been made")
     const { name, price } = req.body
     const newtea = { id: nextid++, name, price }
     tea_data.push(newtea)
@@ -56,3 +83,4 @@ app.delete('/delete/:id', (req, res) => {
     tea_data.splice(index, 1)
     res.status(200).send("Successfully Deleted")
 })
+
